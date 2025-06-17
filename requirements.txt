@@ -1,0 +1,6 @@
+retina-face
+torch
+opencv-python
+numpy
+Pillow
+onnxruntime

@@ -1,0 +1,18 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Model files (optional, if you don't want to upload large binaries)
+models/
+*.onnx
+
+# Environment and system files
+.env
+*.env
+*.DS_Store
+Thumbs.db
+
+# VSCode and IDE settings
+.vscode/
+.idea/
