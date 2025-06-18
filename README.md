@@ -96,6 +96,44 @@ If you have already installed the [ReActor Custom Node] (https://github.com/Gour
 
 You may not need to reinstall these dependencies or download the models again. Simply ensure your environment is activated and proceed with the installation steps for this node.
 
+## Batch Automation Script for ComfyUI Workflows
+
+### New: Batch Image Processing Script
+
+This repository now includes a Python script and a batch file for automating the processing of a folder of images through your ComfyUI workflow, one image at a time, with no manual intervention.
+
+#### Included Files
+- **step_comfyui_images.py** — The main Python automation script.
+- **step_comfyui_images.bat** — A Windows batch file to launch the script with prompts for your workflow and image folder.
+
+#### What the Script Does
+- Prompts you for your exported ComfyUI workflow JSON (API format) and the folder containing your images.
+- Loops through all images in the specified folder (supports PNG, JPG, JPEG, BMP, GIF, TIFF).
+- For each image:
+  - Updates the Load Image node in your workflow to point to the current image (using the full path).
+  - Triggers the workflow via the ComfyUI API.
+  - Waits for the workflow to finish before moving to the next image.
+- Warns you if the folder is empty.
+- Works with images in any folder, not just the default ComfyUI `input` folder.
+
+#### Where to Put the Script and Batch File
+- You can place `step_comfyui_images.py` and `step_comfyui_images.bat` anywhere on your system.
+- For convenience, you may want to keep them on your Desktop or in your ComfyUI root directory.
+
+#### Steps Before Using the Script
+1. **Construct your workflow in ComfyUI** as you would like it to run for each image.
+2. **Export your workflow as API JSON** (use the "Export as API" option in ComfyUI). Once the workflow is successfully exported as api, you can close it inside ComfyUI if you prefer, the script will process the exported workflow as if it was open in ComfyUI (ComfyUI should be running though).
+3. **Note the node id of your Load Image node** (usually shown as a number in the workflow JSON, e.g., `"7"`).
+4. **Place your images in a folder** of your choice (e.g., `L:\test`).
+5. **Run the batch file** (`step_comfyui_images.bat`), enter the path to your workflow JSON and your image folder when prompted.
+
+#### Additional Notes
+- The script will process all images in the folder, one by one, and stop automatically when done.
+- The images will be saved in the directory you set in the SaveImage node.
+- If you want to use the default ComfyUI `input` folder, simply enter its path when prompted.
+- The script is compatible with any workflow that uses the standard Load Image node.
+- If you move the script, make sure Python and the `requests` library are installed and available in your PATH.
+
 ## Credits
 
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) — The base UI and node framework.
