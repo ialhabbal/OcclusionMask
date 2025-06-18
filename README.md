@@ -123,9 +123,8 @@ This repository now includes a Python script and a batch file for automating the
 #### Steps Before Using the Script
 1. **Construct your workflow in ComfyUI** as you would like it to run for each image.
 2. **Export your workflow as API JSON** (use the "Export as API" option in ComfyUI). Once the workflow is successfully exported as api, you can close it inside ComfyUI if you prefer, the script will process the exported workflow as if it was open in ComfyUI (ComfyUI should be running though).
-3. **Note the node id of your Load Image node** (usually shown as a number in the workflow JSON, e.g., `"7"`).
-4. **Place your images in a folder** of your choice (e.g., `L:\test`).
-5. **Run the batch file** (`step_comfyui_images.bat`), enter the path to your workflow JSON and your image folder when prompted.
+3. **Place your images in a folder** of your choice (e.g., `L:\test`).
+4. **Run the batch file** (`step_comfyui_images.bat`), enter the path to your workflow JSON and your image folder when prompted.
 
 #### Additional Notes
 - The script will process all images in the folder, one by one, and stop automatically when done.
