@@ -1,4 +1,3 @@
-# dummy edit to force Git update
 import os
 os.environ["INSIGHTFACE_HOME"] = r"L:\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI\models\insightface"
 import onnxruntime as ort
