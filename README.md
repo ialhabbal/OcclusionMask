@@ -2,10 +2,10 @@
 
 A powerful ComfyUI custom node for advanced face occlusion, segmentation, and masking, leveraging state-of-the-art face detection (insightface buffalo models) for robust and accurate results.
 
-https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205120.jpg
-https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205232.jpg
-https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205346.jpg
-https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20212522.jpg
+![Demo Screenshot]https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205120.jpg
+![Demo Screenshot]https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205232.jpg
+![Demo Screenshot]https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20205346.jpg
+![Demo Screenshot]https://raw.githubusercontent.com/ialhabbal/OcclusionMask/main/media/Screenshot%202025-06-19%20212522.jpg
 
 
 ## Features
