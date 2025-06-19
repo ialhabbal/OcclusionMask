@@ -60,6 +60,11 @@ class ImageOcclusion:
             arr = img.cpu().numpy()
         else:
             arr = np.array(img)
+        
+        # Handle single image from batch (remove batch dimension if present)
+        if arr.ndim == 4 and arr.shape[0] == 1:
+            arr = arr.squeeze(0)
+        
         # Remove all leading singleton dimensions
         arr = np.squeeze(arr)
         # If shape is (H, W), make it (H, W, 1)
@@ -92,93 +97,123 @@ class ImageOcclusion:
                 max_area = area
                 best_bbox = (x1, y1, x2, y2)
         return best_bbox
-
+        
     def apply_mask(self, input_image, mask_type="Object-only", object_mask_threshold=0.5, feather_radius=0, grow_left=0, grow_right=0, grow_up=0, grow_down=0, dilation_radius=0, expansion_iterations=1.0):
-        orig_pil = self._to_pil(input_image)
-        orig_size = orig_pil.size
-        # --- Face detection ---
-        bbox = self._detect_face_bbox(orig_pil)
-        if bbox is not None:
-            x1, y1, x2, y2 = bbox
-            # Clamp bbox to image size
-            x1, y1 = max(0, x1), max(0, y1)
-            x2, y2 = min(orig_size[0], x2), min(orig_size[1], y2)
-            face_crop = orig_pil.crop((x1, y1, x2, y2)).resize((256, 256), Image.BILINEAR)
-            crop_box = (x1, y1, x2, y2)
-        else:
-            # Fallback to whole image
-            face_crop = orig_pil.resize((256, 256), Image.BILINEAR)
-            crop_box = (0, 0, orig_size[0], orig_size[1])
-        img_np = np.array(face_crop).astype(np.float32)
-        img_tensor = torch.from_numpy(img_np.transpose(2,0,1)).to('cpu')
-        # Occluder mask
-        occluder_mask_tensor = self.facemasks.apply_occlusion(img_tensor, amount=0)
-        occluder_mask_np = occluder_mask_tensor.squeeze().cpu().numpy()
-        occluder_mask_img = Image.fromarray((occluder_mask_np * 255).astype(np.uint8), mode='L').resize((crop_box[2]-crop_box[0], crop_box[3]-crop_box[1]), Image.BILINEAR)
-        occluder_mask_arr = np.array(occluder_mask_img).astype(np.float32) / 255.0
-        # XSeg mask
-        xseg_mask_tensor = self.facemasks.apply_dfl_xseg(img_tensor, amount=0)
-        xseg_mask_np = xseg_mask_tensor.squeeze().cpu().numpy()
-        xseg_mask_img = Image.fromarray((xseg_mask_np * 255).astype(np.uint8), mode='L').resize((crop_box[2]-crop_box[0], crop_box[3]-crop_box[1]), Image.BILINEAR)
-        xseg_mask_arr = np.array(xseg_mask_img).astype(np.float32) / 255.0
-        # Object-only mask: occluder - xseg, clamp to [0,1]
-        object_only_arr = np.clip(occluder_mask_arr - xseg_mask_arr, 0, 1)
-        # Select mask
-        if mask_type == "Occluder":
-            mask_arr = occluder_mask_arr
-        elif mask_type == "XSeg":
-            mask_arr = xseg_mask_arr
-        else:
-            mask_arr = object_only_arr
-        # Feather/blur the mask before thresholding
-        if feather_radius > 0:
-            mask_arr = cv2.GaussianBlur(mask_arr, (feather_radius*2+1, feather_radius*2+1), 0)
-        # Apply threshold: everything above threshold is 1, else 0
-        mask_arr = (mask_arr >= object_mask_threshold).astype(np.float32)
-        # Directional grow/shrink: shift and combine or intersect mask in each direction
-        h, w = mask_arr.shape
-        grown_mask = mask_arr.copy()
-        if grow_left > 0:
-            grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:, :-grow_left], ((0,0),(grow_left,0)), mode='constant'))
-        elif grow_left < 0:
-            grown_mask = grown_mask.copy()
-            grown_mask[:, :abs(grow_left)] = 0
-        if grow_right > 0:
-            grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:, grow_right:], ((0,0),(0,grow_right)), mode='constant'))
-        elif grow_right < 0:
-            grown_mask = grown_mask.copy()
-            grown_mask[:, -abs(grow_right):] = 0
-        if grow_up > 0:
-            grown_mask = np.maximum(grown_mask, np.pad(mask_arr[grow_up:, :], ((0,grow_up),(0,0)), mode='constant'))
-        elif grow_up < 0:
-            grown_mask = grown_mask.copy()
-            grown_mask[:abs(grow_up), :] = 0
-        if grow_down > 0:
-            grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:-grow_down, :], ((grow_down,0),(0,0)), mode='constant'))
-        elif grow_down < 0:
-            grown_mask = grown_mask.copy()
-            grown_mask[-abs(grow_down):, :] = 0
-        mask_arr = grown_mask
-        # Dilation: expand the mask by dilation_radius pixels, for expansion_iterations times
-        if dilation_radius > 0 and expansion_iterations > 0:
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2*dilation_radius+1, 2*dilation_radius+1))
-            int_iter = int(np.floor(expansion_iterations))
-            frac_iter = expansion_iterations - int_iter
-            mask = mask_arr.copy()
-            if int_iter > 0:
-                mask = cv2.dilate(mask, kernel, iterations=int_iter)
-            if frac_iter > 0:
-                mask1 = mask
-                mask2 = cv2.dilate(mask, kernel, iterations=1)
-                mask = (1 - frac_iter) * mask1 + frac_iter * mask2
-            mask_arr = np.clip(mask, 0, 1)
-        # --- Place mask back on original image ---
-        full_mask = np.zeros((orig_pil.height, orig_pil.width), dtype=np.float32)
-        x1, y1, x2, y2 = crop_box
-        mask_resized = cv2.resize(mask_arr, (x2-x1, y2-y1), interpolation=cv2.INTER_LINEAR)
-        full_mask[y1:y2, x1:x2] = mask_resized
-        mask_out = torch.from_numpy(full_mask[None, ...].copy()).float()  # [1,H,W]
-        return (input_image, mask_out)
+        # Handle batched input - input_image shape should be [batch_size, height, width, channels]
+        batch_size = input_image.shape[0]
+        
+        output_images = []
+        output_masks = []
+        
+        # Process each image in the batch
+        for i in range(batch_size):
+            # Extract single image from batch
+            single_image = input_image[i]
+            
+            orig_pil = self._to_pil(single_image)
+            orig_size = orig_pil.size
+            
+            # --- Face detection ---
+            bbox = self._detect_face_bbox(orig_pil)
+            if bbox is not None:
+                x1, y1, x2, y2 = bbox
+                # Clamp bbox to image size
+                x1, y1 = max(0, x1), max(0, y1)
+                x2, y2 = min(orig_size[0], x2), min(orig_size[1], y2)
+                face_crop = orig_pil.crop((x1, y1, x2, y2)).resize((256, 256), Image.BILINEAR)
+                crop_box = (x1, y1, x2, y2)
+            else:
+                # Fallback to whole image
+                face_crop = orig_pil.resize((256, 256), Image.BILINEAR)
+                crop_box = (0, 0, orig_size[0], orig_size[1])
+            
+            img_np = np.array(face_crop).astype(np.float32)
+            img_tensor = torch.from_numpy(img_np.transpose(2,0,1)).to('cpu')
+            
+            # Occluder mask
+            occluder_mask_tensor = self.facemasks.apply_occlusion(img_tensor, amount=0)
+            occluder_mask_np = occluder_mask_tensor.squeeze().cpu().numpy()
+            occluder_mask_img = Image.fromarray((occluder_mask_np * 255).astype(np.uint8), mode='L').resize((crop_box[2]-crop_box[0], crop_box[3]-crop_box[1]), Image.BILINEAR)
+            occluder_mask_arr = np.array(occluder_mask_img).astype(np.float32) / 255.0
+            
+            # XSeg mask
+            xseg_mask_tensor = self.facemasks.apply_dfl_xseg(img_tensor, amount=0)
+            xseg_mask_np = xseg_mask_tensor.squeeze().cpu().numpy()
+            xseg_mask_img = Image.fromarray((xseg_mask_np * 255).astype(np.uint8), mode='L').resize((crop_box[2]-crop_box[0], crop_box[3]-crop_box[1]), Image.BILINEAR)
+            xseg_mask_arr = np.array(xseg_mask_img).astype(np.float32) / 255.0
+            
+            # Object-only mask: occluder - xseg, clamp to [0,1]
+            object_only_arr = np.clip(occluder_mask_arr - xseg_mask_arr, 0, 1)
+            
+            # Select mask
+            if mask_type == "Occluder":
+                mask_arr = occluder_mask_arr
+            elif mask_type == "XSeg":
+                mask_arr = xseg_mask_arr
+            else:
+                mask_arr = object_only_arr
+            
+            # Feather/blur the mask before thresholding
+            if feather_radius > 0:
+                mask_arr = cv2.GaussianBlur(mask_arr, (feather_radius*2+1, feather_radius*2+1), 0)
+            
+            # Apply threshold: everything above threshold is 1, else 0
+            mask_arr = (mask_arr >= object_mask_threshold).astype(np.float32)
+            
+            # Directional grow/shrink: shift and combine or intersect mask in each direction
+            h, w = mask_arr.shape
+            grown_mask = mask_arr.copy()
+            if grow_left > 0:
+                grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:, :-grow_left], ((0,0),(grow_left,0)), mode='constant'))
+            elif grow_left < 0:
+                grown_mask = grown_mask.copy()
+                grown_mask[:, :abs(grow_left)] = 0
+            if grow_right > 0:
+                grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:, grow_right:], ((0,0),(0,grow_right)), mode='constant'))
+            elif grow_right < 0:
+                grown_mask = grown_mask.copy()
+                grown_mask[:, -abs(grow_right):] = 0
+            if grow_up > 0:
+                grown_mask = np.maximum(grown_mask, np.pad(mask_arr[grow_up:, :], ((0,grow_up),(0,0)), mode='constant'))
+            elif grow_up < 0:
+                grown_mask = grown_mask.copy()
+                grown_mask[:abs(grow_up), :] = 0
+            if grow_down > 0:
+                grown_mask = np.maximum(grown_mask, np.pad(mask_arr[:-grow_down, :], ((grow_down,0),(0,0)), mode='constant'))
+            elif grow_down < 0:
+                grown_mask = grown_mask.copy()
+                grown_mask[-abs(grow_down):, :] = 0
+            mask_arr = grown_mask
+            
+            # Dilation: expand the mask by dilation_radius pixels, for expansion_iterations times
+            if dilation_radius > 0 and expansion_iterations > 0:
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2*dilation_radius+1, 2*dilation_radius+1))
+                int_iter = int(np.floor(expansion_iterations))
+                frac_iter = expansion_iterations - int_iter
+                mask = mask_arr.copy()
+                if int_iter > 0:
+                    mask = cv2.dilate(mask, kernel, iterations=int_iter)
+                if frac_iter > 0:
+                    mask1 = mask
+                    mask2 = cv2.dilate(mask, kernel, iterations=1)
+                    mask = (1 - frac_iter) * mask1 + frac_iter * mask2
+                mask_arr = np.clip(mask, 0, 1)
+            
+            # --- Place mask back on original image ---
+            full_mask = np.zeros((orig_pil.height, orig_pil.width), dtype=np.float32)
+            x1, y1, x2, y2 = crop_box
+            mask_resized = cv2.resize(mask_arr, (x2-x1, y2-y1), interpolation=cv2.INTER_LINEAR)
+            full_mask[y1:y2, x1:x2] = mask_resized
+            
+            # Store results for this image
+            output_images.append(single_image)
+            output_masks.append(torch.from_numpy(full_mask).float())
+        
+        # Stack all results back into batched tensors
+        batched_images = torch.stack(output_images, dim=0)
+        batched_masks = torch.stack(output_masks, dim=0)
+        
+        return (batched_images, batched_masks)
 
 # Node export mappings
 NODE_CLASS_MAPPINGS = {"ImageOcclusion": ImageOcclusion}
