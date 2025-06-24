@@ -27,7 +27,11 @@ class ImageOcclusion:
         print("[DEBUG] XSeg model outputs:", self.xseg_sess.get_outputs())
         self.facemasks = FaceMasks(device='cpu', model_occluder=self.occluder_sess, model_xseg=self.xseg_sess)
         # --- Load insightface FaceAnalysis with buffalo models ---
-        self.face_detector = FaceAnalysis(providers=['cuda' if torch.cuda.is_available() else 'cpu'])
+        self.face_detector = FaceAnalysis(
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+            if torch.cuda.is_available()
+            else ["CPUExecutionProvider"]
+        )
         self.face_detector.prepare(ctx_id=0 if torch.cuda.is_available() else -1)
 
     @classmethod
