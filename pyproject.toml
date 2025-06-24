@@ -1,0 +1,16 @@
+[project]
+name = "occlusionmask"
+description = "Custom node for advanced face occlusion, segmentation, and masking"
+# v1.0.2: Fixed incorrect ONNX provider string in FaceAnalysis (was 'cuda', now 'CUDAExecutionProvider')
+version = "1.0.2"
+license = { file = "LICENSE" }
+dependencies = ["retina-face", "torch", "opencv-python", "numpy", "Pillow", "onnxruntime"]
+
+[project.urls]
+Repository = "https://github.com/ialhabbal/OcclusionMask"
+
+[tool.comfy]
+PublisherId = "ialhabbal"
+DisplayName = "OcclusionMask"
+Icon = "https://github.com/ialhabbal/OcclusionMask/blob/main/media/Occlusion-ico.png?raw=true"
+includes = []
