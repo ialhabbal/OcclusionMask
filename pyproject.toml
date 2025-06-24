@@ -1,8 +1,8 @@
 [project]
 name = "occlusionmask"
 description = "Custom node for advanced face occlusion, segmentation, and masking"
-# v1.0.4: Update Sliders' Defaults)
-version = "1.0.4"
+# v1.0.5: Add occluder.onnx and XSeg_model.onnx to models folder)
+version = "1.0.5"
 license = { file = "LICENSE" }
 dependencies = ["retina-face", "torch", "opencv-python", "numpy", "Pillow", "onnxruntime"]
 

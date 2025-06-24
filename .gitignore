@@ -3,9 +3,10 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Model files (optional, if you don't want to upload large binaries)
-models/
-*.onnx
+# Allow model files inside occlusionmask node
+!custom_nodes/occlusionmask/models/
+!custom_nodes/occlusionmask/models/occluder.onnx
+!custom_nodes/occlusionmask/models/XSeg_model.onnx
 
 # Environment and system files
 .env

@@ -57,11 +57,9 @@ pip install -r requirements.txt
    ```
    <ComfyUI root>/custom_nodes/OcclusionMask/
    ```
-2. **Place ONNX models:**
-   - `occluder.onnx` and `XSeg_model.onnx` in `OcclusionMask/models/`
+2. **ONNX models:**
+   - These two models `occluder.onnx` 55mb and `XSeg_model.onnx` 67mb, will be downloaded and placed in the model folder in the custom node when you clone the repo or install it from the ComfyUI Manager.
    
-   - Download Occluder.onnx from: https://huggingface.co/OwlMaster/AllFilesRope/blob/d783e61585b3d83a85c91ca8a3b299e8ade94d72/occluder.onnx
-   - Download Xseg_model.onnx from: https://huggingface.co/OwlMaster/AllFilesRope/blob/d783e61585b3d83a85c91ca8a3b299e8ade94d72/XSeg_model.onnx
 
 3. **Place insightface models:**
    - Download buffalo models (e.g., `buffalo_l`) from [insightface model zoo](https://github.com/deepinsight/insightface/tree/master/model_zoo)
