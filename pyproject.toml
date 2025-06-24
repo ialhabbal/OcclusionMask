@@ -1,8 +1,8 @@
 [project]
 name = "occlusionmask"
 description = "Custom node for advanced face occlusion, segmentation, and masking"
-# v1.0.2: Fixed incorrect ONNX provider string in FaceAnalysis (was 'cuda', now 'CUDAExecutionProvider')
-version = "1.0.2"
+# v1.0.3: Fixed incorrect ONNX provider string in FaceAnalysis (was 'cuda', now 'CUDAExecutionProvider')
+version = "1.0.3"
 license = { file = "LICENSE" }
 dependencies = ["retina-face", "torch", "opencv-python", "numpy", "Pillow", "onnxruntime"]
 
