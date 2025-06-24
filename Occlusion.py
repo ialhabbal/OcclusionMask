@@ -41,13 +41,13 @@ class ImageOcclusion:
                 "input_image": ("IMAGE", {"forceInput": True, "label": "Photo 1 (original)"}),
                 "mask_type": (["Occluder", "XSeg", "Object-only"], {"default": "Object-only", "label": "Mask Type"}),
                 "object_mask_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01, "display": "slider", "label": "Object Mask Threshold"}),
-                "feather_radius": ("INT", {"default": 0, "min": 0, "max": 64, "step": 1, "display": "slider", "label": "Feather/Blur Radius (px)"}),
+                "feather_radius": ("INT", {"default": 32, "min": 0, "max": 64, "step": 1, "display": "slider", "label": "Feather/Blur Radius (px)"}),
                 "grow_left": ("INT", {"default": 0, "min": -64, "max": 64, "step": 1, "display": "slider", "label": "Grow Left (px)"}),
                 "grow_right": ("INT", {"default": 0, "min": -64, "max": 64, "step": 1, "display": "slider", "label": "Grow Right (px)"}),
                 "grow_up": ("INT", {"default": 0, "min": -64, "max": 64, "step": 1, "display": "slider", "label": "Grow Up (px)"}),
                 "grow_down": ("INT", {"default": 0, "min": -64, "max": 64, "step": 1, "display": "slider", "label": "Grow Down (px)"}),
-                "dilation_radius": ("INT", {"default": 0, "min": 0, "max": 32, "step": 1, "display": "slider", "label": "Dilation Radius (px)"}),
-                "expansion_iterations": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01, "display": "slider", "label": "Expansion Iterations"})
+                "dilation_radius": ("INT", {"default": 16, "min": 0, "max": 32, "step": 1, "display": "slider", "label": "Dilation Radius (px)"}),
+                "expansion_iterations": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 10.0, "step": 0.01, "display": "slider", "label": "Expansion Iterations"})
             }
         }
 
